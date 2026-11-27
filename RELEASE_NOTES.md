@@ -1,3 +1,18 @@
+# bitLMP 3.9.0
+
+## New look: Stream
+A clean, familiar streaming-app style that anyone can pick up, now the default.
+- Home: greeting, quick chips (YouTube Music, On this phone, AI DJ, Ask AI), a grid of quick tiles for your most-played stuff, then rows of covers
+- Search: a big search bar and colorful Browse all tiles
+- Your Library: one list of playlists, albums and artists with filter chips, Recents or A to Z sort, and a list/grid switch. Liked Songs and Downloaded stay pinned at the top
+- Mini player takes the color of the album cover, with a heart, play/pause and a thin progress line. Swipe it to skip, swipe up to open
+- New player: sits on a color wash from the cover, big art that eases back when paused, heart next to the title, white play button, shuffle and repeat with dots when on, plus lyrics, sound tools (EQ, speed, pitch, crossfade), sleep timer and queue
+- Album, playlist, artist, stats and settings pages all match the new look
+- Voice search in Search
+- Dark by default, light theme in Settings > Look. Two more layouts (Play Music and Expressive) are under Layout
+
+If you enjoy the app, consider supporting development. <3
+
 All your music, one player.
 
 bitLMP 3.8.2 brings back the Bloom icon as the default.
