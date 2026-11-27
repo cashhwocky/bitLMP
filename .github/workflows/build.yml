@@ -41,6 +41,8 @@ jobs:
           cp custom/main.dart app_build/lib/main.dart
           cp custom/tab_dock.dart app_build/lib/tab_dock.dart
           cp custom/tidal_style.dart app_build/lib/tidal_style.dart
+          cp custom/revived_shell.dart app_build/lib/revived_shell.dart
+          cp custom/expressive.dart app_build/lib/expressive.dart
           cp custom/ai_music_chat.dart app_build/lib/ai_music_chat.dart
           cp custom/ai_features.dart app_build/lib/ai_features.dart
           cp custom/AndroidManifest.xml app_build/android/app/src/main/AndroidManifest.xml

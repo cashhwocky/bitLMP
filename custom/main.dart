@@ -22,6 +22,8 @@ import 'ai_features.dart';
 import 'ai_music_chat.dart';
 import 'tab_dock.dart';
 import 'tidal_style.dart';
+import 'revived_shell.dart';
+import 'expressive.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Globals
@@ -1072,6 +1074,7 @@ class TrackItem {
 
 class MyAudioHandler extends BaseAudioHandler with SeekHandler {
   final AudioPlayer player = AudioPlayer(
+    audioPipeline: AudioPipeline(androidAudioEffects: [xpEqualizer]),
     handleInterruptions: true,
     androidApplyAudioAttributes: true,
     handleAudioSessionActivation: true,
@@ -4354,7 +4357,7 @@ void openPlayer(BuildContext context, {bool force = false}) {
       opaque: false,
       transitionDuration: const Duration(milliseconds: 600),
       reverseTransitionDuration: const Duration(milliseconds: 420),
-      pageBuilder: (_, __, ___) => const NowPlayingScreen(),
+      pageBuilder: (_, __, ___) => const XpPlayerScreen(),
       transitionsBuilder: (_, anim, __, child) {
         final curved = CurvedAnimation(
           parent: anim,
@@ -4555,6 +4558,13 @@ class _AlexLmpRootState extends State<AlexLmpRoot> {
         final bottomInset = MediaQuery.of(context).padding.bottom;
         _dockOverlay = true;
 
+        if (true) {
+          return switch (appState.str('xp_layout', 'stream')) {
+            'playmusic' => PmShell(aiChatBuilder: _aiPageStd),
+            'expressive' => XpShell(aiChatBuilder: _aiPageStd),
+            _ => SpShell(aiChatBuilder: _aiPageStd),
+          };
+        }
         if (appState.appStyle == 'bloom') {
           return _bloomScaffold(context, pal, tracks);
         }
@@ -29681,7 +29691,10 @@ class _CircleRevealClipper extends CustomClipper<Path> {
       old.radius != radius || old.center != center;
 }
 
-Future<void> openListeningStats(BuildContext context, {Offset? from}) {
+Future<void> openListeningStats(BuildContext context, {Offset? from}) =>
+    Navigator.of(context).push(xpRoute(const XpStatsPage()));
+
+Future<void> _oldOpenListeningStats(BuildContext context, {Offset? from}) {
   HapticFeedback.mediumImpact();
   final size = MediaQuery.of(context).size;
   final o = from ?? Offset(size.width - 40, 70);
@@ -30888,7 +30901,7 @@ class _ClockPainter extends CustomPainter {
 // When you publish a release: bump kAppVersion here to the SAME number as the
 // release tag (tag v2.2.0  ->  kAppVersion '2.2.0').
 
-const String kAppVersion = '3.8.7';
+const String kAppVersion = '3.9.0';
 /// "Support my project" card at the very top of Settings.
 class SupportCard extends StatefulWidget {
   const SupportCard({super.key});
@@ -31525,6 +31538,10 @@ void toggleOffline(TrackItem t) {
 }
 
 void openDownloads(BuildContext context) {
+  Navigator.of(context).push(xpRoute(const XpCollectionPage.downloads()));
+}
+
+void _oldOpenDownloads(BuildContext context) {
   Navigator.of(context).push(
     MaterialPageRoute(builder: (_) => const DownloadsScreen()),
   );
@@ -31893,6 +31910,11 @@ void openYtShelfItem(BuildContext context, YtShelfItem it) {
       openYtAlbum(context, YtAlbum(it.id, it.title, it.subtitle, it.thumbnail, -1));
       break;
     case 'playlist':
+      Navigator.of(context).push(xpRoute(it.id == 'LM'
+          ? const XpCollectionPage.liked()
+          : XpCollectionPage.youtube(playlistId: it.id, title: it.title, thumbnail: it.thumbnail)));
+      return;
+    case '_old_playlist':
       Navigator.of(context).push(MaterialPageRoute(
         builder: (_) => YtAlbumScreen(
           playlistId: it.id,
@@ -32407,18 +32429,21 @@ class YtNetworkImage extends StatelessWidget {
 
 void openYtArtist(BuildContext context, String url, String name,
     {String? thumbnail}) {
-  Navigator.of(context).push(MaterialPageRoute(
-    builder: (_) => YtArtistScreen(url: url, name: name, thumbnail: thumbnail),
-  ));
+  Navigator.of(context).push(xpRoute(XpArtistPage(url: url, name: name, thumbnail: thumbnail)));
 }
 
 void openYtAlbum(BuildContext context, YtAlbum album) {
-  Navigator.of(context).push(MaterialPageRoute(
-    builder: (_) => YtAlbumScreen(album: album),
-  ));
+  Navigator.of(context).push(xpRoute(
+      XpCollectionPage.album(url: album.url, title: album.title, thumbnail: album.thumbnail)));
 }
 
 void openYtAccountPlaylist(BuildContext context, YtPlaylistRef p) {
+  Navigator.of(context).push(xpRoute(p.playlistId == 'LM'
+      ? const XpCollectionPage.liked()
+      : XpCollectionPage.youtube(playlistId: p.playlistId, title: p.title, thumbnail: p.thumbnail)));
+}
+
+void _oldOpenYtAccountPlaylist(BuildContext context, YtPlaylistRef p) {
   Navigator.of(context).push(MaterialPageRoute(
     builder: (_) => YtAlbumScreen(
       playlistId: p.playlistId,
@@ -36371,8 +36396,8 @@ class LibraryStore {
   static void open(BuildContext context, LibItem i) {
     switch (i.kind) {
       case 'local':
-        Navigator.of(context).push(MaterialPageRoute(
-            builder: (_) => PlaylistDetailScreen(playlistId: i.id)));
+        final pl = appState.playlistById(i.id);
+        if (pl != null) Navigator.of(context).push(xpRoute(XpCollectionPage.local(playlist: pl)));
         break;
       case 'album':
         openYtShelfItem(
@@ -36652,14 +36677,11 @@ Future<void> downloadAndInstallUpdate(BuildContext context, AppRelease rel) asyn
 // of a pop-up list).
 
 void openLocalAlbum(BuildContext context, String album, List<TrackItem> tracks) =>
-    Navigator.of(context).push(MaterialPageRoute(
-        builder: (_) =>
-            LocalCollectionScreen(name: album, tracks: tracks, artist: false)));
+    Navigator.of(context).push(xpRoute(XpCollectionPage.custom(
+        title: album, subtitle: tracks.isEmpty ? null : tracks.first.artist, tracks: tracks)));
 
 void openLocalArtist(BuildContext context, String artist, List<TrackItem> tracks) =>
-    Navigator.of(context).push(MaterialPageRoute(
-        builder: (_) =>
-            LocalCollectionScreen(name: artist, tracks: tracks, artist: true)));
+    Navigator.of(context).push(xpRoute(XpCollectionPage.custom(title: artist, subtitle: 'Artist', tracks: tracks)));
 
 class LocalCollectionScreen extends StatelessWidget {
   final String name;
@@ -40253,3 +40275,7 @@ const List<List<double>> kPixelIconRects = [
   [68.70, 76.50, 1.22, 1.22, 3],
   [69.90, 76.50, 1.22, 1.22, 3],
 ];
+
+
+/// Equalizer on the main player (Sound & tools in AlexLMP Revived).
+final AndroidEqualizer xpEqualizer = AndroidEqualizer();
